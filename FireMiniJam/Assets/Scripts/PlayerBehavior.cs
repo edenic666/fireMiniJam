@@ -14,11 +14,16 @@ public class PlayerBehavior : MonoBehaviour
     public int speed;
     public bool movementLock;
 
+    //combine this behaviour (+ quest tracker) into a single event manager script after gamejam when i have more time lol
     [Header("Torch Detection")]
     public bool torchDetection;
     [SerializeField] public Transform torchCheck;
     [SerializeField] public LayerMask torchLayer;
     public TorchBehavior torch;
+
+
+    [Header("Quest Tracker")]
+    public bool hasItem;
 
     private Rigidbody2D rb;
     private float horizontalInput;
@@ -27,6 +32,7 @@ public class PlayerBehavior : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         movementLock = false;
+        hasItem= false;
     }
 
     void Update()
@@ -59,6 +65,12 @@ public class PlayerBehavior : MonoBehaviour
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0);
             rb.AddForce(Vector2.up * jumpforce, ForceMode2D.Impulse);
+        }
+
+        while (movementLock) 
+        {
+            speed = 0;
+            jumpforce = 0;
         }
     }
 
