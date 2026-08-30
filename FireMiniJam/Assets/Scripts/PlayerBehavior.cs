@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using UnityEngine.InputSystem.EnhancedTouch;
 
 public class PlayerBehavior : MonoBehaviour
@@ -21,24 +22,76 @@ public class PlayerBehavior : MonoBehaviour
     [SerializeField] public LayerMask torchLayer;
     public TorchBehavior torch;
 
+    [Header("Npc Tracker")]
+    public DialogueSystem npc1;
+    public DialogueSystem npc2;
+    public DialogueSystem npc3;
 
     [Header("Quest Tracker")]
     public bool hasItem;
+    public bool solvedRiddle;
 
+    [Header("Walking")]
+    public AudioClip[] footsteps;
+    public float walkSoundDelay = .3f;
+
+    private Coroutine walkingSoundCoroutine;
+    private int lastFootstep = -1;
     private Rigidbody2D rb;
     private float horizontalInput;
+    private Animator anim;
 
+    private IEnumerator PlayWalkingSound() 
+    {
+        while (true) 
+        {
+            PlayRandomFootsteps();
+            yield return new WaitForSeconds(walkSoundDelay);
+        }
+    }
+
+    private void PlayRandomFootsteps() 
+    {
+        if (footsteps == null || footsteps.Length == 0) 
+        {
+            return;
+        }
+        int randomIndex;
+        do
+        {
+            randomIndex = Random.Range(0, footsteps.Length);
+        } while (footsteps.Length > 1 && randomIndex == lastFootstep);
+
+        lastFootstep = randomIndex;
+
+        SoundEffects.instance.PlaySFX(footsteps[randomIndex], 2);
+    }
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         movementLock = false;
         hasItem= false;
+        anim = GetComponent<Animator>();
     }
 
     void Update()
     {
-        playerMovement();
         torchInteraction();
+
+        bool dialogueIsActive =
+            npc1.dialogueActive ||
+            npc2.dialogueActive ||
+            npc3.dialogueActive;
+
+        if (dialogueIsActive)
+        {
+            LockMovement();
+        }
+        else
+        {
+            movementLock = false;
+            playerMovement();
+        }
     }
 
     public void torchInteraction()
@@ -47,7 +100,7 @@ public class PlayerBehavior : MonoBehaviour
         {
             Debug.Log("Torch Touched");
 
-            torch.activated = true;
+            torch.ActivateTorch();
         }
     }
 
@@ -61,6 +114,33 @@ public class PlayerBehavior : MonoBehaviour
             groundLayer
         );
 
+        if (horizontalInput < 0)
+        {
+            anim.SetBool("WalkingLeft", true);
+            anim.SetBool("WalkingRight", false);
+            anim.SetBool("NotWalking", false);
+
+            StartWalkingSound();
+
+        }
+        else if (horizontalInput > 0)
+        {
+            anim.SetBool("WalkingLeft", false);
+            anim.SetBool("WalkingRight", true);
+            anim.SetBool("NotWalking", false);
+
+            StartWalkingSound();
+            
+        }
+        else 
+        {
+            anim.SetBool("WalkingLeft", false);
+            anim.SetBool("WalkingRight", false);
+            anim.SetBool("NotWalking", true);
+
+            StopWalkingSound();
+        }
+
         if (Input.GetButtonDown("Jump") && grounded)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0);
@@ -69,26 +149,73 @@ public class PlayerBehavior : MonoBehaviour
 
         while (movementLock) 
         {
-            speed = 0;
-            jumpforce = 0;
+            movementLock = true;
+
+            // Stop horizontal movement immediately
+            horizontalInput = 0;
+
+            // Stop the Rigidbody from continuing to slide
+            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+
+            // Stop walking animation
+            anim.SetBool("WalkingLeft", false);
+            anim.SetBool("WalkingRight", false);
+            anim.SetBool("NotWalking", true);
+
+            // Stop footsteps
+            StopWalkingSound();
         }
     }
 
     private void FixedUpdate()
     {
+        if (movementLock)
+        {
+            rb.linearVelocity = new Vector2(
+                0,
+                rb.linearVelocity.y
+            );
+
+            return;
+        }
+
         rb.linearVelocity = new Vector2(
             horizontalInput * speed,
             rb.linearVelocity.y
         );
     }
-
-    public bool lockMovement(bool locked)
+    private void StartWalkingSound() 
     {
-        if (movementLock == true)
+        if (walkingSoundCoroutine == null) 
         {
-            speed = 0;
+            walkingSoundCoroutine = StartCoroutine(PlayWalkingSound());
         }
+    }
 
-        return movementLock;
+    private void StopWalkingSound() 
+    {
+        if (walkingSoundCoroutine != null) 
+        {
+            StopCoroutine(walkingSoundCoroutine);
+            walkingSoundCoroutine = null;
+        }
+    }
+
+    public void LockMovement()
+    {
+        movementLock = true;
+        horizontalInput = 0;
+
+        rb.linearVelocity = new Vector2(
+            0,
+            rb.linearVelocity.y
+        );
+
+        anim.SetBool("WalkingLeft", false);
+        anim.SetBool("WalkingRight", false);
+        anim.SetBool("NotWalking", true);
+
+        StopWalkingSound();
+
     }
 }

@@ -3,13 +3,36 @@ using TMPro;
 using System.Collections;
 public class DialogueSystem : MonoBehaviour
 {
-    public TextMeshProUGUI textComponent; 
-    public string[] lines; 
-    public float textSpeed; 
-    private int index;
+    [Header("Assign Dialogue Box")]
+    public TextMeshProUGUI textComponent;
     public GameObject dialogueBox;
-    private bool dialogueActive = false;
 
+    [Header("Dialogue Change Event")]
+    public DialogueEvent dialogueChangeEvent;
+
+    [Header("Lines Before")]
+    public string[] linesBefore;
+
+    [Header("Lines After")]
+    public string[] linesAfter;
+
+    [Header("Player")]
+    public PlayerBehavior player;
+
+    public float textSpeed;
+
+    private string[] currentLines;
+
+    private int index;
+    public bool dialogueActive = false;
+    private bool isTyping = false;
+
+    public enum DialogueEvent 
+    {
+        None,
+        HasItem,
+        SolvedRiddle
+    }
     public bool IsDialogueActive() 
     {
         return dialogueActive;
@@ -17,7 +40,6 @@ public class DialogueSystem : MonoBehaviour
 
     void Start()
     { 
-        // Don't automatically start here if the NPC // should only talk when interacted with.
       textComponent.text = string.Empty;
       dialogueBox.SetActive(false);
     }
@@ -25,47 +47,88 @@ public class DialogueSystem : MonoBehaviour
         if (!dialogueActive)
             return;
 
-        if (Input.GetKeyDown(KeyCode.Space)) 
-        { 
-            if (textComponent.text == lines[index]) 
-            { 
-                NextLine(); 
-            } 
-            else 
-            { 
-                StopAllCoroutines(); 
-                textComponent.text = lines[index]; 
-            } 
+        if (Input.GetKeyDown(KeyCode.Return)) 
+        {
+            if (isTyping) 
+            {
+                FinishLine();
+            } else NextLine();
         } 
     }
 
     // Call this every time the player talks to the NPC
     public void StartDialogue() 
-    { // Make sure the dialogue object is active
-      dialogueBox.SetActive(true); 
-        // Reset everything so the dialogue starts from line 1
-        index = 0; 
-        textComponent.text = string.Empty; 
-        StopAllCoroutines(); 
-        StartCoroutine(TypeLine()); } 
+    {
+        if (dialogueActive)
+            return;
+
+        if (EventHasHappened()) 
+        {
+            currentLines = linesAfter;
+        }
+        else
+        {
+            currentLines = linesBefore;
+        }
+
+        if (currentLines == null || currentLines.Length == 0) 
+        {
+            Debug.LogWarning("No dialogue lines assigned");
+        }
+
+        dialogueActive = true;
+        index = 0;
+
+        dialogueBox.SetActive(true);
+
+        textComponent.text = string.Empty;
+
+        StartCoroutine(TypeLine());
+    }
+
+    private bool EventHasHappened() 
+    {
+        switch (dialogueChangeEvent) 
+        {
+            case DialogueEvent.HasItem:
+                return player.hasItem;
+
+            case DialogueEvent.SolvedRiddle:
+                return player.solvedRiddle;
+
+            case DialogueEvent.None:
+            default:
+                return false;
+        }
+    }
     IEnumerator TypeLine() 
     { 
-        foreach (char c in lines[index].ToCharArray()) 
+        isTyping= true;
+        textComponent.text = string.Empty;
+        foreach (char c in currentLines[index].ToCharArray()) 
         { 
             textComponent.text += c; 
             yield return new WaitForSeconds(textSpeed); 
-        } 
-    } 
+        }
+        isTyping = false;
+    }
+    private void FinishLine() 
+    {
+        StopAllCoroutines();
+
+        textComponent.text = currentLines[index];
+
+        isTyping = false;
+    }
     void NextLine() 
     { 
-        if (index < lines.Length - 1) 
+        if (index < currentLines.Length - 1) 
         { 
             index++; 
-            textComponent.text = string.Empty; 
             StartCoroutine(TypeLine()); 
         } 
         else 
-        { // Dialogue is finished. // Hide it until the NPC is spoken to again.
+        {
               EndDialogue();
         } 
     }
@@ -73,8 +136,12 @@ public class DialogueSystem : MonoBehaviour
     public void EndDialogue() 
     {
         StopAllCoroutines();
+
         dialogueActive = false;
+        isTyping=false;
+
         textComponent.text=string.Empty;
+
         dialogueBox.SetActive(false);
     }
 }

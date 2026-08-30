@@ -9,16 +9,7 @@ public class NPCBehaviour : MonoBehaviour
 
     private bool playerInRange = false;
 
-    private void Update()
-    {
-        if (playerInRange && Input.GetKeyDown(KeyCode.X))
-        {
-            if (!Dialogue.IsDialogueActive()) 
-            {
-                Dialogue.StartDialogue();
-            }
-        }
-    }
+    
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void OnTriggerEnter2D(Collider2D other)
     {
@@ -35,6 +26,16 @@ public class NPCBehaviour : MonoBehaviour
         {
             playerInRange = false;
             Debug.Log("Player left NPC Trigger");
+        }
+    }
+    private void Update()
+    {
+        if (playerInRange && Input.GetKeyDown(KeyCode.X))
+        {
+            if (!Dialogue.IsDialogueActive())
+            {
+                Dialogue.StartDialogue();
+            }
         }
     }
 

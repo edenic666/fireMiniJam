@@ -8,6 +8,8 @@ public class FinalDoor : MonoBehaviour
 {
     public string finalScene;
     public GameObject player;
+    public bool playerInDoor=false;
+    public AudioClip doorUnlock;
 
     [Header("Torch/Door Slots")]
     public GameObject doorLid;
@@ -28,7 +30,18 @@ public class FinalDoor : MonoBehaviour
         {
             doorLid.SetActive(false);
         }
-        
+
+        if (playerInDoor && Input.GetKeyDown(KeyCode.Z))
+        {
+            Debug.Log("Z pressed at FINAL DOOR");
+
+            if (player != null && torch1.activated && torch2.activated && torch3.activated)
+            {
+                SoundEffects.instance.PlaySFX(doorUnlock,2);
+                SceneManager.LoadScene(finalScene);
+            }
+        }
+
     }
 
 
@@ -38,6 +51,7 @@ public class FinalDoor : MonoBehaviour
         {
             player = other.gameObject;
             Debug.Log("Player entered door trigger");
+            playerInDoor = true;
         }
     }
 
@@ -47,18 +61,11 @@ public class FinalDoor : MonoBehaviour
         {
             player = null;
             Debug.Log("Player left door trigger");
+            playerInDoor = false;
         }
     }
     private void OnTriggerStay2D(Collider2D other)
     {
-        if (other.CompareTag("Player") && Input.GetKeyDown(KeyCode.Z))
-        {
-            Debug.Log("Z pressed at FINAL DOOR");
-
-            if (player != null && torch1.activated && torch2.activated && torch3.activated)
-            {
-                SceneManager.LoadScene(finalScene);
-            }
-        }
+        
     }
 }

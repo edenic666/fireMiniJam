@@ -5,6 +5,10 @@ public class TorchBehavior : MonoBehaviour
     public bool activated;
     public SpriteRenderer sprite;
 
+    public GameObject flame;
+
+    public AudioClip torchLight;
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Player"))
@@ -33,11 +37,18 @@ public class TorchBehavior : MonoBehaviour
         }
     }
 
-    private void Update()
+    public void ActivateTorch()
     {
+        // Don't activate it again if it's already lit
         if (activated)
-        {
-            sprite.color = Color.red;
-        }
+            return;
+
+        activated = true;
+
+        // Turn on flame
+        flame.SetActive(true);
+
+        // Play sound ONCE
+        SoundEffects.instance.PlaySFX(torchLight, 5f);
     }
 }

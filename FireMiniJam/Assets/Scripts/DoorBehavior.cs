@@ -6,6 +6,7 @@ public class DoorBehavior : MonoBehaviour
     public Transform lowerFloor;
 
     private GameObject player;
+    public AudioClip doorOpen;
 
     private void Update()
     {
@@ -18,6 +19,7 @@ public class DoorBehavior : MonoBehaviour
             {
                 player.transform.position = upperFloor.position;
                 Debug.Log("Moved up");
+                SoundEffects.instance.PlaySFX(doorOpen, 2);
             }
         }
 
@@ -29,6 +31,7 @@ public class DoorBehavior : MonoBehaviour
             {
                 player.transform.position = lowerFloor.position;
                 Debug.Log("Moved down");
+                SoundEffects.instance.PlaySFX(doorOpen, 2);
             }
         }
     }

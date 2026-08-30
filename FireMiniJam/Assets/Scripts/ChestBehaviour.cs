@@ -11,19 +11,24 @@ public class ChestBehaviour : MonoBehaviour
     public GameObject playerChar;
     private PlayerBehavior player;
 
+    public AudioClip chestOpened;
+
     private bool playerInside = false;
+
+    private Animator anim;
 
     void Start()
     {
         torch = torch_1.GetComponent<TorchBehavior>();
         player = playerChar.GetComponent<PlayerBehavior>();
+        anim = GetComponent<Animator>();
     }
 
     void Update()
     {
         if (torch.activated)
         {
-            sprite.color = Color.green;
+            anim.SetBool("PlayerOpen", true);
             chestClosed.SetActive(false);
         }
 
@@ -32,6 +37,7 @@ public class ChestBehaviour : MonoBehaviour
             Debug.Log("Chest destroyed!");
 
             player.hasItem = true;
+            SoundEffects.instance.PlaySFX(chestOpened,2);
             Destroy(gameObject);
         }
     }
