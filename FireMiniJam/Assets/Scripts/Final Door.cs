@@ -10,6 +10,7 @@ public class FinalDoor : MonoBehaviour
     public GameObject player;
     public bool playerInDoor=false;
     public AudioClip doorUnlock;
+    public AudioClip puzzleSolve;
 
     [Header("Torch/Door Slots")]
     public GameObject doorLid;
@@ -29,6 +30,7 @@ public class FinalDoor : MonoBehaviour
         if (torch1.activated && torch2.activated && torch3.activated) 
         {
             doorLid.SetActive(false);
+           // SoundEffects.instance.PlaySFX(puzzleSolve, 2);
         }
 
         if (playerInDoor && Input.GetKeyDown(KeyCode.Z))
